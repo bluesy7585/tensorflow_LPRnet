@@ -190,5 +190,5 @@ if __name__ == "__main__":
 
     for img, label in zip(plates, labels):
         full_path = os.path.join(save_dir, labelToSaveFilename(label))
-        #img = data_augmentation(img)
+        img = data_augmentation(img)
         cv2.imwrite(full_path, img)
