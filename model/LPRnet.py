@@ -16,7 +16,7 @@ train_dir = 'train'
 val_dir = 'valid'
 test_dir = 'test'
 
-IMG_SIZE = [94, 24]
+IMG_SIZE = [128, 32]#[94, 24]##
 CH_NUM = 3
 
 CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789" # exclude I, O
@@ -76,8 +76,14 @@ class LPRnet:
         self.targets = tf.sparse_placeholder(tf.int32)
 
         logits = self.cnn_layers(self.inputs, is_train)
+
+        #print(logits.get_shape().as_list())
+
         logits_shape = tf.shape(logits)
-        seq_len = tf.fill([logits_shape[0]], 24)
+        cur_batch_size = logits_shape[0]
+        timesteps = logits_shape[1]
+
+        seq_len = tf.fill([cur_batch_size], timesteps)
 
         logits = tf.transpose(logits, (1, 0, 2))
         decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
@@ -170,6 +176,5 @@ class LPRnet:
         conv_out = conv2d(gc_concat, NUM_CLASS, ksize=(1, 1), name='conv_out')
 
         logits = tf.reduce_mean(conv_out, axis=2)
-        #print(logits.get_shape().as_list())
 
         return logits

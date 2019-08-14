@@ -64,12 +64,11 @@ class ImageGenerator:
             yield c, np.array(im)[:, :, 0]
 
     def generate_code(self):
-        # random 1~2 letters + 1~2 digits + 2~3 letters
-        pre_n = random.randint(1, 2)
+        pre_n = random.randint(2, 3)
         pre_letters = [random.choice(self.letters) for _ in range(pre_n)]
-        digit_n = random.randint(1, 2)
+        digit_n = random.randint(2, 3)
         digits = [random.choice(self.digits) for _ in range(digit_n)]
-        post_n = random.randint(2, 3)
+        post_n = random.randint(2, 4)
         post_letters = [random.choice(self.letters) for _ in range(post_n)]
 
         code = ''.join(pre_letters) + ''.join(digits) + '-' + ''.join(post_letters)
@@ -115,8 +114,8 @@ class ImageGenerator:
 
             top_padding = round(random.uniform(0.1, 1.0) * char_height)
             bot_padding = round(random.uniform(0.1, 1.0) * char_height)
-            left_padding = round(random.uniform(0.1, 1.0) * char_height)
-            right_padding = round(random.uniform(0.1, 1.0) * char_height)
+            left_padding = round(random.uniform(0.1, 2.0) * char_height)
+            right_padding = round(random.uniform(0.1, 2.0) * char_height)
 
             Plate_h = (char_height + top_padding + bot_padding)
             Plate_w = (char_width_sum + left_padding + right_padding + sum(char_spacing[:-1]))
