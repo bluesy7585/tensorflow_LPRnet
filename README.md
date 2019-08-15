@@ -30,6 +30,20 @@ e.g
 
 `python main.py -m test -c .\checkpoint\LPRnet_steps5000_loss_0.215.ckpt`
 
+### test single image
+
+to test single image and show result
+
+`python main.py -m test -c [checkpioint] --img [image fullpath]`
+
+e.g
+```
+python main.py -m test -c .\checkpoint\LPRnet_steps5000_loss_0.215.ckpt --img .\test\AW73RHW_18771.jpg
+...
+restore from checkpoint: .\checkpoint\LPRnet_steps5000_loss_0.215.ckpt
+AM73RHW
+```
+
 ## references
 - [LPRnet](https://arxiv.org/abs/1806.10447 "LPRnet")
 - https://github.com/lyl8213/Plate_Recognition-LPRnet
