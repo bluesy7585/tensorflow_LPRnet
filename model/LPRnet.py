@@ -12,9 +12,9 @@ VALIDATE_EPOCHS = 10
 BATCH_SIZE = 64
 BATCH_PER_EPOCH = 50
 
-train_dir = 'train'
-val_dir = 'valid'
-test_dir = 'test'
+TRAIN_DIR = 'train'
+VAL_DIR = 'valid'
+TEST_DIR = 'test'
 
 IMG_SIZE = [94, 24]
 CH_NUM = 3

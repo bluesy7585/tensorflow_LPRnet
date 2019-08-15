@@ -3,7 +3,48 @@ import os
 import time
 import numpy as np
 import argparse
+import cv2
 from model.LPRnet import *
+
+
+def infer_single_image(checkpoint, fname):
+
+    if not os.path.isfile(fname):
+        print('file {} does not exist.'.format(fname))
+        return
+
+    img_w = IMG_SIZE[0]
+    img_h = IMG_SIZE[1]
+
+    img = cv2.imread(fname)
+    img = cv2.resize(img, (img_w, img_h))
+    img_batch = img.transpose(1, 0, 2)
+    img_batch = np.expand_dims(img_batch, axis=0)
+
+    # print(img_batch.shape)
+    lprnet = LPRnet(is_train=False)
+
+    with tf.Session() as sess:
+        sess.run(lprnet.init)
+        saver = tf.train.Saver(tf.global_variables())
+
+        if not restore_checkpoint(sess, saver, checkpoint, is_train=False):
+            return
+
+        test_feed = {lprnet.inputs: img_batch}
+        dense_decode = sess.run(lprnet.dense_decoded, test_feed)
+
+        decoded_labels = []
+        for item in dense_decode:
+            expression = ['' if i == -1 else DECODE_DICT[i] for i in item]
+            expression = ''.join(expression)
+            decoded_labels.append(expression)
+
+        for l in decoded_labels:
+            print(l)
+
+    #cv2.imshow(os.path.basename(fname), img)
+    #cv2.waitKey(0)
 
 
 def inference(sess, model, val_gen):
@@ -70,8 +111,8 @@ def restore_checkpoint(sess, saver, ckpt, is_train=True):
 
 def train(checkpoint, runtime_generate=False):
     lprnet = LPRnet(is_train=True)
-    train_gen = utils.DataIterator(img_dir=train_dir, runtime_generate=runtime_generate)
-    val_gen = utils.DataIterator(img_dir=val_dir)
+    train_gen = utils.DataIterator(img_dir=TRAIN_DIR, runtime_generate=runtime_generate)
+    val_gen = utils.DataIterator(img_dir=VAL_DIR)
 
     def train_batch(train_gen):
         if runtime_generate:
@@ -117,7 +158,7 @@ def train(checkpoint, runtime_generate=False):
 
 def test(checkpoint):
     lprnet = LPRnet(is_train=False)
-    test_gen = utils.DataIterator(img_dir=test_dir)
+    test_gen = utils.DataIterator(img_dir=TEST_DIR)
     with tf.Session() as sess:
         sess.run(lprnet.init)
         saver = tf.train.Saver(tf.global_variables())
@@ -136,13 +177,18 @@ if __name__ == "__main__":
                         type=str, default="train")
     parser.add_argument("-r", "--runtime", help="train with runtime-generated images",
                         action='store_true')
+    parser.add_argument("--img", help="image fullpath to test",
+                        type=str, default=None)
 
     args = parser.parse_args()
 
     if args.mode == 'train':
         train(checkpoint=args.ckpt, runtime_generate=args.runtime)
     elif args.mode == 'test':
-        test(checkpoint=args.ckpt)
+        if args.img is None:
+            test(checkpoint=args.ckpt)
+        else:
+            infer_single_image(checkpoint=args.ckpt, fname=args.img)
     else:
         print('unknown mode:', args.mode)
 
