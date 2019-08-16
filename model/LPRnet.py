@@ -16,6 +16,8 @@ TRAIN_DIR = 'train'
 VAL_DIR = 'valid'
 TEST_DIR = 'test'
 
+CHECKPOINT_DIR = './checkpoint'
+
 IMG_SIZE = [94, 24]
 CH_NUM = 3
 
@@ -55,13 +57,14 @@ def conv2d(inputdata, out_channel,ksize,stride=[1,1,1,1],pad = 'SAME', name=None
         add_bias = tf.nn.bias_add(conv, biases)
     return add_bias
 
-def global_context(inputdata, ksize, strides):
-    avg_pool = tf.nn.avg_pool(inputdata,
-                       ksize=ksize,
-                       strides=strides,
-                       padding='SAME')
-    sqm = tf.reduce_mean(tf.square(avg_pool))
-    out = tf.div(avg_pool, sqm)
+def global_context(inputdata, ksize, strides, name=None):
+    with tf.variable_scope(name):
+        avg_pool = tf.nn.avg_pool(inputdata,
+                           ksize=ksize,
+                           strides=strides,
+                           padding='SAME')
+        sqm = tf.reduce_mean(tf.square(avg_pool))
+        out = tf.div(avg_pool, sqm)
     return out
 
 
@@ -71,13 +74,18 @@ class LPRnet:
 
         self.inputs = tf.placeholder(
             tf.float32,
-            shape=(None, IMG_SIZE[0], IMG_SIZE[1], CH_NUM))
+            shape=(None, IMG_SIZE[0], IMG_SIZE[1], CH_NUM),
+            name='inputs')
 
         self.targets = tf.sparse_placeholder(tf.int32)
 
         logits = self.cnn_layers(self.inputs, is_train)
         logits_shape = tf.shape(logits)
-        seq_len = tf.fill([logits_shape[0]], 24)
+
+        cur_batch_size = logits_shape[0]
+        timesteps = logits_shape[1]
+
+        seq_len = tf.fill([cur_batch_size], timesteps)
 
         logits = tf.transpose(logits, (1, 0, 2))
         decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
@@ -145,18 +153,18 @@ class LPRnet:
         ## global context
         scale1 = global_context(conv1,
                              ksize=[1, 4, 1, 1],
-                             strides=[1, 4, 1, 1]
-                             )
+                             strides=[1, 4, 1, 1],
+                             name='gc1')
 
         scale2 = global_context(sbb1,
                              ksize=[1, 4, 1, 1],
-                             strides=[1, 4, 1, 1]
-                             )
+                             strides=[1, 4, 1, 1],
+                             name='gc2')
 
         scale3 = global_context(sbb3,
                              ksize=[1, 2, 1, 1],
-                             strides=[1, 2, 1, 1]
-                             )
+                             strides=[1, 2, 1, 1],
+                             name = 'gc3')
 
         sqm = tf.reduce_mean(tf.square(conv3_relu))
         scale4 = tf.div(conv3_relu, sqm)

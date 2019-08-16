@@ -126,7 +126,7 @@ def train(checkpoint, runtime_generate=False):
             [lprnet.loss, lprnet.global_step, lprnet.optimizer, lprnet.learning_rate], feed)
 
         if steps > 0 and steps % SAVE_STEPS == 0:
-            ckpt_dir = './checkpoint/'
+            ckpt_dir = CHECKPOINT_DIR
             ckpt_file = os.path.join(ckpt_dir, \
                         'LPRnet_steps{}_loss_{:.3f}.ckpt'.format(steps, loss))
             if not os.path.isdir(ckpt_dir): os.mkdir(ckpt_dir)
@@ -172,7 +172,7 @@ def test(checkpoint):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--ckpt", help="checkpoint",
-                        type=str, default="")
+                        type=str, default=None)
     parser.add_argument("-m", "--mode", help="train or test",
                         type=str, default="train")
     parser.add_argument("-r", "--runtime", help="train with runtime-generated images",
