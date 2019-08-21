@@ -33,10 +33,10 @@ def small_basic_block(inputdata, out_channel, name=None):
         conv1 = conv2d(inputdata, out_div4, ksize=[1,1], name='conv1')
         relu1 = tf.nn.relu(conv1)
 
-        conv2 = conv2d(relu1, out_div4, ksize=[3,1], name='conv2')
+        conv2 = conv2d(relu1, out_div4, ksize=[1,3], name='conv2')
         relu2 = tf.nn.relu(conv2)
 
-        conv3 = conv2d(relu2, out_div4, ksize=[1,3], name='conv3')
+        conv3 = conv2d(relu2, out_div4, ksize=[3,1], name='conv3')
         relu3 = tf.nn.relu(conv3)
 
         conv4 = conv2d(relu3, out_channel, ksize=[1,1], name='conv4')
@@ -72,9 +72,10 @@ class LPRnet:
 
     def __init__(self, is_train):
 
+        width, height = IMG_SIZE
         self.inputs = tf.placeholder(
             tf.float32,
-            shape=(None, IMG_SIZE[0], IMG_SIZE[1], CH_NUM),
+            shape=(None, height, width, CH_NUM),
             name='inputs')
 
         self.targets = tf.sparse_placeholder(tf.int32)
@@ -125,45 +126,45 @@ class LPRnet:
                               ksize=[1, 3, 3, 1],
                               strides=[1, 1, 1, 1],
                               padding='SAME')
-        sbb1 = small_basic_block(max1, 128, name='sbb1') # 128
+        sbb1 = small_basic_block(max1, 128, name='sbb1')
         max2 = tf.nn.max_pool(sbb1,
                               ksize=[1, 3, 3, 1],
-                              strides=[1, 2, 1, 1],
+                              strides=[1, 1, 2, 1],
                               padding='SAME')
 
         sbb2 = small_basic_block(max2, 256, name='sbb2')
         sbb3 = small_basic_block(sbb2, 256, name='sbb3')
         max3 = tf.nn.max_pool(sbb3,
                            ksize=[1, 3, 3, 1],
-                           strides=[1, 2, 1, 1],
+                           strides=[1, 1, 2, 1],
                            padding='SAME')
 
         dropout1 = tf.layers.dropout(max3, training=is_train)
 
-        conv2 = conv2d(dropout1, 256, ksize=[4, 1], name='conv_d1')
+        conv2 = conv2d(dropout1, 256, ksize=[1, 4], name='conv_d1')
         conv2_bn = tf.layers.batch_normalization(conv2)
         conv2_relu = tf.nn.relu(conv2_bn)
 
         dropout2 = tf.layers.dropout(conv2_relu, training=is_train)
 
-        conv3 = conv2d(dropout2, NUM_CLASS, ksize=[1, 13], name='conv_d2')
+        conv3 = conv2d(dropout2, NUM_CLASS, ksize=[13, 1], name='conv_d2')
         conv3_bn = tf.layers.batch_normalization(conv3)
         conv3_relu = tf.nn.relu(conv3_bn)
 
         ## global context
         scale1 = global_context(conv1,
-                             ksize=[1, 4, 1, 1],
-                             strides=[1, 4, 1, 1],
+                             ksize=[1, 1, 4, 1],
+                             strides=[1, 1, 4, 1],
                              name='gc1')
 
         scale2 = global_context(sbb1,
-                             ksize=[1, 4, 1, 1],
-                             strides=[1, 4, 1, 1],
+                             ksize=[1, 1, 4, 1],
+                             strides=[1, 1, 4, 1],
                              name='gc2')
 
         scale3 = global_context(sbb3,
-                             ksize=[1, 2, 1, 1],
-                             strides=[1, 2, 1, 1],
+                             ksize=[1, 1, 2, 1],
+                             strides=[1, 1, 2, 1],
                              name = 'gc3')
 
         sqm = tf.reduce_mean(tf.square(conv3_relu))
@@ -177,7 +178,7 @@ class LPRnet:
         gc_concat = tf.concat([scale1, scale2, scale3, scale4], 3)
         conv_out = conv2d(gc_concat, NUM_CLASS, ksize=(1, 1), name='conv_out')
 
-        logits = tf.reduce_mean(conv_out, axis=2)
+        logits = tf.reduce_mean(conv_out, axis=1)
         #print(logits.get_shape().as_list())
 
         return logits

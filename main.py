@@ -18,8 +18,7 @@ def infer_single_image(checkpoint, fname):
 
     img = cv2.imread(fname)
     img = cv2.resize(img, (img_w, img_h))
-    img_batch = img.transpose(1, 0, 2)
-    img_batch = np.expand_dims(img_batch, axis=0)
+    img_batch = np.expand_dims(img, axis=0)
 
     # print(img_batch.shape)
     lprnet = LPRnet(is_train=False)

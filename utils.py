@@ -83,7 +83,6 @@ class DataIterator:
 
             labels.append(self.labels[sample_ind])
 
-        images = np.transpose(images, axes=[0, 2, 1, 3])
         sparse_labels = sparse_tuple_from(labels)
 
         return images, sparse_labels, labels
@@ -109,7 +108,6 @@ class DataIterator:
                 img = cv2.imread(os.path.join(self.img_dir, fname))
                 img = cv2.resize(img, (self.img_w, self.img_h))
                 images[j, ...] = img
-            images = np.transpose(images, axes=[0, 2, 1, 3])
 
             labels = self.labels[start:end, ...]
             sparse_labels = sparse_tuple_from(labels)
@@ -130,7 +128,6 @@ class DataIterator:
             img = data_augmentation(img)
             img = cv2.resize(img, (self.img_w, self.img_h))
             images[i, ...] = img
-        images = np.transpose(images, axes=[0, 2, 1, 3])
 
         sparse_labels = sparse_tuple_from(labels)
 
